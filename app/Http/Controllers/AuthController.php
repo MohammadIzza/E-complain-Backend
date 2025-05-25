@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;         // Facade untuk hashing password
 use Illuminate\Http\Request;                 // Class untuk menangani HTTP request
 use Illuminate\Support\Facades\Auth;         // Facade untuk autentikasi
 use Illuminate\Support\Facades\Validator;    // Facade untuk validasi
-use Illuminate\Support\Facades\DB;           // Facade untuk database transaction
+use Illuminate\Support\Facades\DB;           // Facade untuk database transactionuse App\Models\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {

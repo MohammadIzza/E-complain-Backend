@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ComplainController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +30,10 @@ Route::middleware('auth:sanctum')->group(function(){
     // logout
     Route::post('/logout',[AuthController::class,'logout']);
 
+    // Menginput data complain
+    Route::post('/complain',[ComplainController::class,'store']);
 
+    // Mengambil semua data complain berdasarkan id, jika user
+    // jika admin akan diamnbil semua
+    Route::get('/complain',[ComplainController::class,'index']);
 });
