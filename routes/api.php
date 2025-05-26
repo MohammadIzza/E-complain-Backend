@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ComplainController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -36,4 +37,13 @@ Route::middleware('auth:sanctum')->group(function(){
     // Mengambil semua data complain berdasarkan id, jika user
     // jika admin akan diamnbil semua
     Route::get('/complain',[ComplainController::class,'index']);
-});
+
+    // Mengambil data complain berdasarkan kode
+    Route::get('/complain/{code}', [ComplainController::class, 'show']);
+
+    // Menambahkan repy complain oleh admin
+    Route::post('/complain-reply/{code}', [ComplainController::class, 'storeReply']);
+
+    // api untuk mengambil data statistic
+    Route::get('/dashboard/statistics',[DashboardController::class,'getStatistics']);
+}); 

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 // Import class-class yang dibutuhkan
+
+use App\Http\Requests\ComplainReplyRequest;
 use App\Http\Requests\ComplainStoreRequest; // Class untuk validasi request
 use App\Http\Resources\ComplainResource;    // Class untuk format response
 use App\Models\Complain;                    // Model Complain
+use App\Models\ComplainReply;
 use Exception;                              // Class untuk menangani error
 use Illuminate\Http\Request;                // Class untuk menangani HTTP request
 use Illuminate\Support\Facades\DB;          // Facade untuk database operations
@@ -117,13 +120,123 @@ class ComplainController extends Controller
             // Kembalikan response sukses dengan status code 200 (OK)
             return response()->json([
                 'message' => 'Data complain berhasil diambil',
-                'dataa' => ComplainResource::collection($complains)
+                'data' => ComplainResource::collection($complains)
             ], 200);
 
         } catch (Exception $e) {
             // Kembalikan response error jika terjadi masalah
             return response()->json([
                 'message' => 'Gagal mengambil data complain',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+/**
+     * Menampilkan detail complain berdasarkan kode
+     * Method: GET
+     * Endpoint: /api/complain/{code}
+     * 
+     * @param string $code - Kode complain yang akan ditampilkan
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($code)
+    {
+        try {
+            // Cari complain berdasarkan kode
+            $complain = Complain::where('code', $code)->first();
+
+            // Jika complain tidak ditemukan, kembalikan response 404
+            if(!$complain) {
+                return response()->json([
+                    'message' => "Tiket tidak ditemukan"
+                ], 404);
+            }
+
+            // Cek akses user
+            // Jika user biasa, hanya bisa melihat complain miliknya sendiri
+            if(Auth::user()->role == 'user' && $complain->user_id != Auth::user()->id) {
+                return response()->json([
+                    'message' => "Tidak diperbolehkan mengakses Complain ini"
+                ], 403);
+            }
+
+            // Kembalikan response sukses dengan data complain
+            return response()->json([
+                "message" => "Menampilkan Detail Complain",
+                "data" => new ComplainResource($complain)
+            ], 200);
+
+        } catch (Exception $e) {
+            // Kembalikan response error jika terjadi masalah
+            return response()->json([
+                'message' => 'Error tidak bisa mengakses API',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // meke response complain 
+    public function storeReply(ComplainReplyRequest $request, $code)
+    {
+        // Ambil data yang sudah divalidasi
+        $data = $request->validated();
+    
+        // Mulai transaction database
+        DB::beginTransaction();
+    
+        try {
+            // Cari complain berdasarkan kode
+            $complain = Complain::where('code', $code)->first();
+    
+            // Jika complain tidak ditemukan
+            if(!$complain) {
+                return response()->json([   
+                    'message' => 'Complain tidak ditemukan'
+                ], 404);
+            }
+    
+            // Cek akses user
+            // Jika user biasa, hanya bisa membalas complain miliknya sendiri
+            if(Auth::user()->role == 'user' && $complain->user_id != Auth::user()->id) {
+                return response()->json([
+                    'message' => 'Anda tidak diperbolehkan membalas tiket ini'
+                ], 403);
+            }
+    
+            // Buat reply baru
+            $complainReply = new ComplainReply();
+            $complainReply->complain_id = $complain->id;
+            $complainReply->user_id = Auth::user()->id;
+            $complainReply->content = $data['content'];
+            $complainReply->save();
+    
+            // Jika admin, update status complain
+            if(Auth::user()->role == 'admin') {
+                $complain->status = $data['status'];
+                if($data['status'] == 'resolved') {
+                    $complain->completed_at = now();
+                }
+                $complain->save();
+            }
+    
+            // Commit transaction
+            DB::commit();
+    
+            // Kembalikan response sukses
+            return response()->json([
+                'message' => 'Response Complain berhasil dibuat',
+                'data' => new ComplainResource($complain)
+            ], 201);
+    
+        } catch (Exception $e) {
+            // Rollback transaction jika terjadi error
+            DB::rollBack();
+    
+            // Kembalikan response error
+            return response()->json([
+                'message' => "Gagal membuat response",
                 'error' => $e->getMessage()
             ], 500);
         }

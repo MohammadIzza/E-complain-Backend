@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\UserResource;
+use App\Http\Resources\ComplaiReplyResource;
 
 class ComplainResource extends JsonResource
 {
@@ -29,7 +30,7 @@ class ComplainResource extends JsonResource
 
         return [
             "id" => $this->id,
-            "user" => new UserResource($this->whenLoaded('user')), 
+            "user" => new UserResource($this->user), 
             "code" => $this->code,
             "title" => $this->title,
             "description"=> $this->description,
@@ -37,7 +38,8 @@ class ComplainResource extends JsonResource
             "priority"=>$this->priority,
             "created_at"=>$this->created_at,
             "updated_at"=>$this->updated_at,
-            "completed_at"=>$this->completed_at            
+            "completed_at"=>$this->completed_at ,
+            'complain_replies'=>ComplaiReplyResource::collection($this->complainReplies)         
         ];
     }
 }
