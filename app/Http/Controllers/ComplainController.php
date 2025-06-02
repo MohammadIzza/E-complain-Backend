@@ -144,32 +144,28 @@ class ComplainController extends Controller
     public function show($code)
     {
         try {
-            // Cari complain berdasarkan kode
-            $complain = Complain::where('code', $code)->first();
+            // Fetch complain with replies
+            $complain = Complain::with('complainReplies.user')->where('code', $code)->first();
 
-            // Jika complain tidak ditemukan, kembalikan response 404
-            if(!$complain) {
+            if (!$complain) {
                 return response()->json([
                     'message' => "Tiket tidak ditemukan"
                 ], 404);
             }
 
-            // Cek akses user
-            // Jika user biasa, hanya bisa melihat complain miliknya sendiri
-            if(Auth::user()->role == 'user' && $complain->user_id != Auth::user()->id) {
+            // Check user access
+            if (Auth::user()->role == 'user' && $complain->user_id != Auth::user()->id) {
                 return response()->json([
                     'message' => "Tidak diperbolehkan mengakses Complain ini"
                 ], 403);
             }
 
-            // Kembalikan response sukses dengan data complain
             return response()->json([
                 "message" => "Menampilkan Detail Complain",
                 "data" => new ComplainResource($complain)
             ], 200);
 
         } catch (Exception $e) {
-            // Kembalikan response error jika terjadi masalah
             return response()->json([
                 'message' => 'Error tidak bisa mengakses API',
                 'error' => $e->getMessage()
@@ -197,7 +193,7 @@ class ComplainController extends Controller
                 ], 404);
             }
     
-            // Cek akses user
+            // Check user access
             // Jika user biasa, hanya bisa membalas complain miliknya sendiri
             if(Auth::user()->role == 'user' && $complain->user_id != Auth::user()->id) {
                 return response()->json([
